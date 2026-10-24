@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="clean">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>동쿠 바코드 생성기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Gugi&family=Nanum+Gothic+Coding:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.code128.min.js"></script>
+<style>
+:root{
+  --bg:#0b0814; --panel:#17122b; --hi:#3f3573; --lo:#05030c; --txt:#e9e4ff; --dim:#9a90c9;
+  --pink:#ff3d8b; --violet:#6a2bd9; --lime:#c8ff3d; --err:#ff7a70;
+  color-scheme:dark; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100vh;color:var(--txt);font-family:"Nanum Gothic Coding","Malgun Gothic",monospace;font-size:15px;line-height:1.6;
+  background-color:var(--bg);
+  background-image:radial-gradient(var(--hi) 1px,transparent 1.5px),radial-gradient(var(--violet) 1px,transparent 1.5px);
+  background-size:24px 24px,24px 24px;background-position:0 0,12px 12px}
+main{max-width:620px;margin:0 auto;padding:36px 16px 48px}
+.win{background:var(--panel);border:2px solid #000;
+  box-shadow:inset 2px 2px 0 var(--hi),inset -2px -2px 0 var(--lo),8px 8px 0 #000}
+.title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:3px;padding:5px 8px;
+  background:linear-gradient(90deg,var(--violet),var(--pink));color:#fff;font-family:"Gugi",sans-serif;font-size:1rem}
+.ctl{display:flex;gap:4px}
+.ctl i{display:grid;place-items:center;width:20px;height:18px;background:var(--panel);color:var(--txt);font:700 12px/1 "Nanum Gothic Coding",monospace;font-style:normal;
+  box-shadow:inset 1px 1px 0 var(--hi),inset -1px -1px 0 #000}
+.body{padding:20px 18px 18px}
+h1{font-family:"Gugi",sans-serif;font-weight:400;font-size:clamp(1.9rem,8vw,2.7rem);line-height:1.15;margin:0 0 4px;color:#fff;
+  text-shadow:3px 3px 0 var(--pink)}
+.sub{margin:0 0 20px;color:var(--dim)}
+.preview{background:#fff;min-height:170px;display:flex;align-items:center;justify-content:center;overflow-x:auto;padding:8px;
+  border:2px solid #000;box-shadow:inset 2px 2px 0 #aaa}
+#bc{max-width:100%;height:auto}
+.err{color:#c4261d;font-weight:700;text-align:center;margin:0;padding:0 8px}
+label.f{display:block;font-weight:700;margin:18px 0 6px}
+.val{color:var(--lime);margin-left:8px;font-weight:400}
+input[type=text]{width:100%;font:inherit;font-size:1.1rem;padding:10px 12px;background:var(--bg);color:var(--lime);caret-color:var(--pink);
+  border:2px solid #000;box-shadow:inset 2px 2px 0 var(--lo),inset -2px -2px 0 var(--hi);border-radius:0}
+input[type=text]:focus-visible,button:focus-visible,input[type=range]:focus-visible,.check input:focus-visible{outline:2px dashed var(--pink);outline-offset:3px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.row div{min-width:0}
+input[type=range]{width:100%;accent-color:var(--pink)}
+.check{display:flex;align-items:center;gap:10px;margin:18px 0}
+.check input{width:18px;height:18px;accent-color:var(--pink)}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+button{font:inherit;font-weight:700;padding:9px 20px;color:var(--txt);background:var(--panel);cursor:pointer;border:2px solid #000;border-radius:0;
+  box-shadow:inset 2px 2px 0 var(--hi),inset -2px -2px 0 var(--lo)}
+button.main{background:var(--pink);color:#fff;box-shadow:inset 2px 2px 0 #ff8fbd,inset -2px -2px 0 #a8124f}
+button:active{box-shadow:inset 2px 2px 0 var(--lo),inset -2px -2px 0 var(--hi);transform:translate(1px,1px)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.status{display:flex;justify-content:space-between;gap:12px;margin:0 3px 3px;padding:4px 10px;font-size:.85rem;color:var(--dim);
+  background:var(--bg);box-shadow:inset 1px 1px 0 var(--lo),inset -1px -1px 0 var(--hi)}
+.status span:first-child{color:var(--lime)}
+.note{margin:18px 0 0;text-align:center;font-size:.8rem;color:var(--dim)}
+.tools{display:flex;align-items:center;gap:8px}
+.tbtn{display:grid;place-items:center;width:30px;height:26px;padding:0;color:var(--txt)}
+.tbtn svg{width:16px;height:16px;fill:currentColor}
+.tbtn .i-pixel{display:none}
+
+:root[data-theme="clean"]{--bg:#f3f5f9;--panel:#ffffff;--hi:#e1e4ea;--lo:#e1e4ea;--txt:#1d2433;--dim:#69708a;--pink:#2f5bea;--violet:#2f5bea;--lime:#2a7a4b;--err:#c4261d;color-scheme:light}
+:root[data-theme="clean"] body{background-image:none;font-family:"Noto Sans KR",system-ui,sans-serif;font-size:15px}
+:root[data-theme="clean"] .win{border:1px solid #dfe3ec;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(20,30,60,.08),0 10px 28px rgba(20,30,60,.07)}
+:root[data-theme="clean"] .title{margin:0;padding:12px 18px;background:#fff;color:var(--txt);font-family:"Noto Sans KR",sans-serif;font-weight:700;border-bottom:1px solid #e6e9f0}
+:root[data-theme="clean"] .ctl{display:none}
+:root[data-theme="clean"] h1{font-family:"Noto Sans KR",sans-serif;font-weight:700;font-size:clamp(1.5rem,6vw,1.9rem);color:var(--txt);text-shadow:none}
+:root[data-theme="clean"] .preview{border:1px solid #dfe3ec;border-radius:6px;box-shadow:none}
+:root[data-theme="clean"] input[type=text]{background:#fff;color:var(--txt);caret-color:var(--pink);border:1px solid #c9cfdd;border-radius:6px;box-shadow:none}
+:root[data-theme="clean"] input[type=text]:focus-visible,:root[data-theme="clean"] button:focus-visible,:root[data-theme="clean"] input[type=range]:focus-visible,:root[data-theme="clean"] .check input:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+:root[data-theme="clean"] button{border:1px solid #c9cfdd;border-radius:6px;background:#fff;color:var(--txt);box-shadow:none}
+:root[data-theme="clean"] button.main{background:var(--pink);border-color:var(--pink);color:#fff}
+:root[data-theme="clean"] button:active{box-shadow:none;transform:none;filter:brightness(.94)}
+:root[data-theme="clean"] .tbtn{width:32px;height:30px}
+:root[data-theme="clean"] .tbtn .i-tidy{display:none}
+:root[data-theme="clean"] .tbtn .i-pixel{display:block}
+:root[data-theme="clean"] .status{margin:0;padding:8px 18px;background:#f7f8fb;box-shadow:none;border-top:1px solid #e6e9f0}
+@media (max-width:420px){.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="win">
+    <div class="title"><span>동쿠 바코드 생성기</span><span class="tools"><button type="button" class="tbtn" id="theme" aria-label="얌전한 테마로 바꾸기" title="얌전한 테마로 바꾸기"><svg class="i-tidy" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v2H2zM2 7h12v2H2zM2 11h8v2H2z"/></svg><svg class="i-pixel" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM11 6.5h3v3h-3zM2 11h3v3H2zM6.5 11h3v3h-3zM11 11h3v3h-3z"/></svg></button><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></span></div>
+    <div class="body">
+      <h1>바코드 뽑기</h1>
+      <p class="sub">Code128 바코드를 바로 만들어요.</p>
+
+      <div class="preview" aria-live="polite">
+        <svg id="bc" role="img" aria-label="생성된 바코드"></svg>
+        <p class="err" id="err" hidden></p>
+      </div>
+
+      <label class="f" for="txt">내용</label>
+      <input type="text" id="txt" value="CLAUDEYAM-2026" autocomplete="off" spellcheck="false" maxlength="80">
+
+      <div class="row">
+        <div>
+          <label class="f" for="w">막대 굵기<span class="val" id="wv">2</span></label>
+          <input type="range" id="w" min="1" max="5" step="1" value="2">
+        </div>
+        <div>
+          <label class="f" for="h">높이<span class="val" id="hv">100</span></label>
+          <input type="range" id="h" min="40" max="200" step="10" value="100">
+        </div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="show" checked> 아래에 글자 표시</label>
+
+      <div class="btns">
+        <button id="png" class="main">PNG 저장</button>
+        <button id="svg">SVG 저장</button>
+      </div>
+    </div>
+    <div class="status"><span id="st">준비 완료</span><span id="len">0자</span></div>
+  </div>
+  <p class="note">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.</p>
+</main>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var txt=$('txt'),w=$('w'),h=$('h'),show=$('show'),bc=$('bc'),err=$('err'),png=$('png'),svg=$('svg'),st=$('st'),len=$('len');
+  var ok=false;
+
+  function render(){
+    $('wv').textContent=w.value; $('hv').textContent=h.value;
+    var v=txt.value;
+    len.textContent=v.length+'자';
+    err.hidden=true; bc.style.display='';
+    ok=false;
+    if(!v){ showErr('내용을 입력해 주세요.'); return; }
+    if(/[^\x20-\x7E]/.test(v)){ showErr('영문, 숫자, 기호만 입력할 수 있어요.'); return; }
+    try{
+      JsBarcode(bc,v,{format:'CODE128',width:+w.value,height:+h.value,displayValue:show.checked,
+        margin:12,fontSize:18,textMargin:6,background:'#ffffff',lineColor:'#000000'});
+      ok=true; st.textContent='준비 완료';
+    }catch(e){ showErr('바코드를 만들 수 없어요. 내용을 확인해 주세요.'); }
+    png.disabled=svg.disabled=!ok;
+  }
+  function showErr(m){
+    bc.style.display='none'; err.textContent=m; err.hidden=false; png.disabled=svg.disabled=true; st.textContent='오류';
+  }
+  function say(m){ st.textContent=m; clearTimeout(say.t); say.t=setTimeout(function(){ if(ok) st.textContent='준비 완료'; },2500); }
+  function name(){ return 'barcode-'+(txt.value.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,30)||'code128'); }
+  function save(href,file){ var a=document.createElement('a'); a.href=href; a.download=file; document.body.appendChild(a); a.click(); a.remove(); }
+  function markup(){
+    var s=new XMLSerializer().serializeToString(bc);
+    if(s.indexOf('xmlns=')<0) s=s.replace('<svg','<svg xmlns="http://www.w3.org/2000/svg"');
+    return s;
+  }
+
+  svg.addEventListener('click',function(){
+    if(!ok) return;
+    save('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup()),name()+'.svg');
+    say('SVG를 저장했어요.');
+  });
+  png.addEventListener('click',function(){
+    if(!ok) return;
+    var img=new Image(), scale=3;
+    img.onload=function(){
+      var c=document.createElement('canvas');
+      c.width=img.width*scale; c.height=img.height*scale;
+      var x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+      x.drawImage(img,0,0,c.width,c.height);
+      try{ save(c.toDataURL('image/png'),name()+'.png'); say('PNG를 저장했어요.'); }
+      catch(e){ say('PNG 저장이 막혔어요. SVG로 저장해 보세요.'); }
+    };
+    img.onerror=function(){ say('PNG 만들기에 실패했어요. SVG로 저장해 보세요.'); };
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup());
+  });
+
+  var root=document.documentElement, tb=$('theme');
+  function setTheme(t,saveIt){
+    var clean=t==='clean';
+    if(clean) root.setAttribute('data-theme','clean'); else root.removeAttribute('data-theme');
+    var l=clean?'도트 테마로 바꾸기':'얌전한 테마로 바꾸기';
+    tb.setAttribute('aria-label',l); tb.title=l;
+    if(saveIt){ try{ localStorage.setItem('dk-theme',t); }catch(e){} }
+  }
+  var saved=null; try{ saved=localStorage.getItem('dk-theme'); }catch(e){}
+  setTheme(saved==='retro'?'retro':'clean',false);
+  tb.addEventListener('click',function(){ setTheme(root.getAttribute('data-theme')==='clean'?'retro':'clean',true); });
+
+  [txt,w,h,show].forEach(function(el){ el.addEventListener('input',render); });
+  render();
+})();
+</script>
+</body>
+</html>
