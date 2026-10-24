@@ -39,6 +39,8 @@ h1{font-family:"Gugi",sans-serif;font-weight:400;font-size:clamp(1.9rem,8vw,2.7r
 .preview{background:#fff;min-height:170px;display:flex;align-items:center;justify-content:center;overflow-x:auto;padding:8px;
   border:2px solid #000;box-shadow:inset 2px 2px 0 #aaa}
 #bc{max-width:100%;height:auto}
+#out{display:block;max-width:100%;height:auto}
+#out[hidden]{display:none}
 .err{color:#c4261d;font-weight:700;text-align:center;margin:0;padding:0 8px}
 label.f{display:block;font-weight:700;margin:18px 0 6px}
 .val{color:var(--lime);margin-left:8px;font-weight:400}
@@ -93,7 +95,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
       <p class="sub">Code128 바코드를 바로 만들어요.</p>
 
       <div class="preview" aria-live="polite">
-        <svg id="bc" role="img" aria-label="생성된 바코드"></svg>
+        <img id="out" alt="생성된 바코드" hidden>
+        <svg id="bc" role="img" aria-label="생성된 바코드" style="display:none"></svg>
         <p class="err" id="err" hidden></p>
       </div>
 
@@ -120,32 +123,48 @@ button:disabled{opacity:.4;cursor:not-allowed}
     </div>
     <div class="status"><span id="st">준비 완료</span><span id="len">0자</span></div>
   </div>
-  <p class="note">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.</p>
+  <p class="note">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.<br>바코드를 우클릭하거나 길게 누르면 새 탭에서 열거나 이미지로 저장할 수 있어요.</p>
 </main>
 
 <script>
 (function(){
   var $=function(id){return document.getElementById(id)};
-  var txt=$('txt'),w=$('w'),h=$('h'),show=$('show'),bc=$('bc'),err=$('err'),png=$('png'),svg=$('svg'),st=$('st'),len=$('len');
+  var txt=$('txt'),w=$('w'),h=$('h'),show=$('show'),bc=$('bc'),err=$('err'),png=$('png'),svg=$('svg'),st=$('st'),len=$('len'),out=$('out'),tok=0;
   var ok=false;
 
   function render(){
     $('wv').textContent=w.value; $('hv').textContent=h.value;
     var v=txt.value;
     len.textContent=v.length+'자';
-    err.hidden=true; bc.style.display='';
+    err.hidden=true;
     ok=false;
     if(!v){ showErr('내용을 입력해 주세요.'); return; }
     if(/[^\x20-\x7E]/.test(v)){ showErr('영문, 숫자, 기호만 입력할 수 있어요.'); return; }
     try{
       JsBarcode(bc,v,{format:'CODE128',width:+w.value,height:+h.value,displayValue:show.checked,
         margin:12,fontSize:18,textMargin:6,background:'#ffffff',lineColor:'#000000'});
-      ok=true; st.textContent='준비 완료'; st.style.color='';
+      ok=true; st.textContent='준비 완료'; st.style.color=''; makeImg();
     }catch(e){ if(window.console) console.error(e); showErr('바코드를 만들 수 없어요. 내용을 확인해 주세요.'); }
     png.disabled=svg.disabled=!ok;
   }
+  function makeImg(){
+    var n=++tok, W=parseFloat(bc.getAttribute('width'))||0, H=parseFloat(bc.getAttribute('height'))||0;
+    var im=new Image();
+    im.onload=function(){
+      if(n!==tok) return;
+      try{
+        var c=document.createElement('canvas'), s=3, cw=W||im.width, ch=H||im.height;
+        c.width=cw*s; c.height=ch*s;
+        var x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height);
+        out.src=c.toDataURL('image/png'); out.style.width=cw+'px'; out.hidden=false; bc.style.display='none';
+      }catch(e){ fallback(); }
+    };
+    im.onerror=function(){ if(n===tok) fallback(); };
+    im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup());
+  }
+  function fallback(){ out.hidden=true; bc.style.display=''; }
   function showErr(m){
-    bc.style.display='none'; err.textContent=m; err.hidden=false; png.disabled=svg.disabled=true; st.textContent='오류'; st.style.color='var(--err)';
+    tok++; out.hidden=true; bc.style.display='none'; err.textContent=m; err.hidden=false; png.disabled=svg.disabled=true; st.textContent='오류'; st.style.color='var(--err)';
   }
   function say(m){ st.textContent=m; clearTimeout(say.t); say.t=setTimeout(function(){ if(ok) st.textContent='준비 완료'; },2500); }
   function name(){ return 'barcode-'+(txt.value.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,30)||'code128'); }
