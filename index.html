@@ -109,6 +109,26 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
 .res-h b{font-size:.95rem}
 .res-h button{padding:6px 14px}
 .res pre{margin:0;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-all;font:inherit;font-size:.95rem;color:var(--txt)}
+#prt{display:inline-flex;align-items:center;gap:6px;background:var(--lime);color:#0b0814;box-shadow:inset 2px 2px 0 #e6ff94,inset -2px -2px 0 #7fa31a}
+#prt:active:not(:disabled){box-shadow:inset 2px 2px 0 #7fa31a,inset -2px -2px 0 #e6ff94}
+#prt svg{width:18px;height:18px;fill:currentColor}
+#prt:hover:not(:disabled) svg{animation:prt-wiggle .5s ease-in-out}
+@keyframes prt-wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg) translateY(-2px)}75%{transform:rotate(12deg) translateY(-2px)}}
+:root[data-theme="clean"] #prt{margin-left:auto;width:42px;height:42px;padding:0;justify-content:center;border-radius:6px;background:#eef0f5;border-color:#c9cfdd;color:#4a5160;box-shadow:none}
+:root[data-theme="clean"] #prt:hover:not(:disabled){background:#e2e5ec}
+:root[data-theme="clean"] #prt .lbl{display:none}
+:root[data-theme="clean"] #prt svg{width:20px;height:20px}
+:root[data-theme="clean"] #prt:active:not(:disabled){box-shadow:none}
+@media (prefers-reduced-motion:reduce){#prt:hover svg{animation:none}}
+#print-area{display:none}
+#print-area img{max-width:100%;height:auto}
+@media print{
+  html,body{background:#fff!important}
+  body{background-image:none!important}
+  body>main{display:none!important}
+  #print-area{display:block!important}
+  @page{margin:10mm}
+}
 </style>
 </head>
 <body>
@@ -150,6 +170,7 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
       <div class="btns">
         <button id="png" class="main">PNG 저장</button>
         <button id="svg">SVG 저장</button>
+        <button id="prt" aria-label="인쇄" title="인쇄"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 1h8v3H4zM2 5h12a1 1 0 0 1 1 1v5h-3V9H4v2H1V6a1 1 0 0 1 1-1zM5 10h6v5H5z"/></svg><span class="lbl">인쇄</span></button>
       </div>
     </div>
     <div class="status"><span id="st">준비 완료</span><span id="len">0자</span></div>
@@ -192,11 +213,12 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
   </div>
   <p class="note" id="note-barcode">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.<br>바코드를 우클릭하거나 길게 누르면 새 탭에서 열거나 이미지로 저장할 수 있어요.</p>
 </main>
+<div id="print-area" aria-hidden="true"></div>
 
 <script>
 (function(){
   var $=function(id){return document.getElementById(id)};
-  var txt=$('txt'),w=$('w'),h=$('h'),show=$('show'),bc=$('bc'),err=$('err'),png=$('png'),svg=$('svg'),st=$('st'),len=$('len'),out=$('out'),tok=0;
+  var txt=$('txt'),w=$('w'),h=$('h'),show=$('show'),bc=$('bc'),err=$('err'),png=$('png'),svg=$('svg'),prt=$('prt'),st=$('st'),len=$('len'),out=$('out'),tok=0;
   var ok=false;
 
   function render(){
@@ -212,7 +234,7 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
         margin:12,fontSize:18,textMargin:6,background:'#ffffff',lineColor:'#000000'});
       ok=true; st.textContent='준비 완료'; st.style.color=''; makeImg();
     }catch(e){ if(window.console) console.error(e); showErr('바코드를 만들 수 없어요. 내용을 확인해 주세요.'); }
-    png.disabled=svg.disabled=!ok;
+    png.disabled=svg.disabled=prt.disabled=!ok;
   }
   function makeImg(){
     var n=++tok, W=parseFloat(bc.getAttribute('width'))||0, H=parseFloat(bc.getAttribute('height'))||0;
@@ -231,7 +253,7 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
   }
   function fallback(){ out.hidden=true; bc.style.display=''; }
   function showErr(m){
-    tok++; out.hidden=true; bc.style.display='none'; err.textContent=m; err.hidden=false; png.disabled=svg.disabled=true; st.textContent='오류'; st.style.color='var(--err)';
+    tok++; out.hidden=true; bc.style.display='none'; err.textContent=m; err.hidden=false; png.disabled=svg.disabled=prt.disabled=true; st.textContent='오류'; st.style.color='var(--err)';
   }
   function say(m){ st.textContent=m; clearTimeout(say.t); say.t=setTimeout(function(){ if(ok) st.textContent='준비 완료'; },2500); }
   function name(){ return 'barcode-'+(txt.value.replace(/[^A-Za-z0-9_-]/g,'_').slice(0,30)||'code128'); }
@@ -246,6 +268,13 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
     if(!ok) return;
     save('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup()),name()+'.svg');
     say('SVG를 저장했어요.');
+  });
+  prt.addEventListener('click',function(){
+    if(!ok) return;
+    var pa=$('print-area'), im=new Image();
+    im.onload=function(){ pa.innerHTML=''; pa.appendChild(im); window.print(); };
+    im.onerror=function(){ say('인쇄 준비에 실패했어요.'); };
+    im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup());
   });
   png.addEventListener('click',function(){
     if(!ok) return;
