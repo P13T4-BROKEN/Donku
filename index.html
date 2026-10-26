@@ -84,12 +84,43 @@ button:disabled{opacity:.4;cursor:not-allowed}
 :root[data-theme="clean"] .tbtn .i-pixel{display:block}
 :root[data-theme="clean"] .status{margin:0;padding:8px 18px;background:#f7f8fb;box-shadow:none;border-top:1px solid #e6e9f0}
 @media (max-width:420px){.row{grid-template-columns:1fr}}
+
+/* ===== 탭 + 여과기 (추가) ===== */
+[hidden]{display:none!important}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1 1 auto;padding:9px 10px}
+.seg button small{margin-left:4px;font-weight:400;opacity:.8}
+.seg button.on{background:var(--pink);color:#fff;box-shadow:inset 2px 2px 0 #ff8fbd,inset -2px -2px 0 #a8124f}
+:root[data-theme="clean"] .seg button.on{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:none}
+.main-tabs{padding:12px 18px 0}
+textarea,select{font:inherit;font-size:.95rem;padding:10px 12px;background:var(--bg);color:var(--lime);caret-color:var(--pink);
+  border:2px solid #000;box-shadow:inset 2px 2px 0 var(--lo),inset -2px -2px 0 var(--hi);border-radius:0}
+textarea{width:100%;height:150px;resize:vertical}
+select{padding:6px 8px}
+textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2px dashed var(--pink);outline-offset:3px}
+:root[data-theme="clean"] textarea,:root[data-theme="clean"] select{background:#fff;color:var(--txt);border:1px solid #c9cfdd;border-radius:6px;box-shadow:none}
+:root[data-theme="clean"] textarea:focus-visible,:root[data-theme="clean"] select:focus-visible,:root[data-theme="clean"] .opts input:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+.opts{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:16px 0}
+.opts label{display:flex;gap:6px;align-items:center}
+.opts input{accent-color:var(--pink)}
+.res{margin-top:12px;padding:10px;background:var(--bg);border:2px solid #000;box-shadow:inset 2px 2px 0 var(--lo),inset -2px -2px 0 var(--hi)}
+:root[data-theme="clean"] .res{background:#fff;border:1px solid #dfe3ec;border-radius:6px;box-shadow:none}
+.res-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.res-h b{font-size:.95rem}
+.res-h button{padding:6px 14px}
+.res pre{margin:0;max-height:320px;overflow:auto;white-space:pre-wrap;word-break:break-all;font:inherit;font-size:.95rem;color:var(--txt)}
 </style>
 </head>
 <body>
 <main>
   <div class="win">
-    <div class="title"><span>동쿠 바코드 생성기</span><span class="tools"><button type="button" class="tbtn" id="theme" aria-label="얌전한 테마로 바꾸기" title="얌전한 테마로 바꾸기"><svg class="i-tidy" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v2H2zM2 7h12v2H2zM2 11h8v2H2z"/></svg><svg class="i-pixel" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM11 6.5h3v3h-3zM2 11h3v3H2zM6.5 11h3v3h-3zM11 11h3v3h-3z"/></svg></button><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></span></div>
+    <div class="title"><span id="ttl">동쿠 바코드 생성기</span><span class="tools"><button type="button" class="tbtn" id="theme" aria-label="얌전한 테마로 바꾸기" title="얌전한 테마로 바꾸기"><svg class="i-tidy" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v2H2zM2 7h12v2H2zM2 11h8v2H2z"/></svg><svg class="i-pixel" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM11 6.5h3v3h-3zM2 11h3v3H2zM6.5 11h3v3h-3zM11 11h3v3h-3z"/></svg></button><span class="ctl" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span></span></div>
+    <div class="seg main-tabs" id="mtabs" role="tablist">
+      <button type="button" role="tab" class="on" aria-selected="true" data-t="barcode">바코드 생성기</button>
+      <button type="button" role="tab" aria-selected="false" data-t="filter">4호기 여과기</button>
+    </div>
+
+    <div id="p-barcode">
     <div class="body">
       <h1>바코드 뽑기</h1>
       <p class="sub">Code128 바코드를 바로 만들어요.</p>
@@ -122,8 +153,44 @@ button:disabled{opacity:.4;cursor:not-allowed}
       </div>
     </div>
     <div class="status"><span id="st">준비 완료</span><span id="len">0자</span></div>
+    </div>
+
+    <div id="p-filter" hidden>
+    <div class="body">
+      <h1>4호기 여과기</h1>
+      <p class="sub">두 목록을 붙여넣으면 바로 계산해요.</p>
+
+      <div class="row">
+        <div>
+          <label class="f" for="fa">리젝에서 B동으로 넘어간 4호기<span class="val" id="fca"></span></label>
+          <textarea id="fa" placeholder="한 줄에 하나씩 (또는 쉼표/탭 구분)" spellcheck="false"></textarea>
+        </div>
+        <div>
+          <label class="f" for="fb">전체 4호기 배치<span class="val" id="fcb"></span></label>
+          <textarea id="fb" placeholder="한 줄에 하나씩 (또는 쉼표/탭 구분)" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="opts">
+        <label>구분자
+          <select id="fsep"><option value="auto">자동 (줄바꿈·쉼표·탭)</option><option value="line">줄바꿈만</option><option value="comma">쉼표만</option></select></label>
+        <label><input type="checkbox" id="fic" checked> 대소문자 무시</label>
+        <label><input type="checkbox" id="ftr" checked> 앞뒤 공백 제거</label>
+      </div>
+
+      <div class="seg" id="ftabs">
+        <button type="button" class="on" data-k="bma">A동 4호기<small></small></button>
+        <button type="button" data-k="both">B동 4호기<small></small></button>
+      </div>
+
+      <div class="res">
+        <div class="res-h"><b id="frt">결과 C</b><button type="button" id="fcp">복사</button></div>
+        <pre id="fout"></pre>
+      </div>
+    </div>
+    </div>
   </div>
-  <p class="note">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.<br>바코드를 우클릭하거나 길게 누르면 새 탭에서 열거나 이미지로 저장할 수 있어요.</p>
+  <p class="note" id="note-barcode">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.<br>바코드를 우클릭하거나 길게 누르면 새 탭에서 열거나 이미지로 저장할 수 있어요.</p>
 </main>
 
 <script>
@@ -209,6 +276,85 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
   [txt,w,h,show].forEach(function(el){ el.addEventListener('input',render); });
   render();
+})();
+</script>
+
+<script>
+/* 탭 전환 + 4호기 여과기 (추가) */
+(function(){
+  var $=function(id){return document.getElementById(id)};
+
+  var titles={barcode:'동쿠 바코드 생성기',filter:'4호기 여과기'};
+  var mt=document.querySelectorAll('#mtabs button');
+  function go(t){
+    $('p-barcode').hidden=t!=='barcode';
+    $('note-barcode').hidden=t!=='barcode';
+    $('p-filter').hidden=t!=='filter';
+    $('ttl').textContent=titles[t];
+    for(var i=0;i<mt.length;i++){
+      var on=mt[i].getAttribute('data-t')===t;
+      mt[i].className=on?'on':'';
+      mt[i].setAttribute('aria-selected',on?'true':'false');
+    }
+  }
+  for(var i=0;i<mt.length;i++){
+    mt[i].addEventListener('click',function(){ go(this.getAttribute('data-t')); });
+  }
+
+  var key='bma';
+  var names={bma:'A동 4호기',both:'B동 4호기'};
+  function parse(t){
+    var m=$('fsep').value;
+    var re=m==='line'?/\r?\n/:m==='comma'?/,/:/\r?\n|,|\t/;
+    var arr=t.split(re);
+    if($('ftr').checked) arr=arr.map(function(s){return s.trim()});
+    return arr.filter(function(s){return s!==''});
+  }
+  function norm(s){ return $('fic').checked?s.toLowerCase():s; }
+  function uniq(arr){
+    var seen=new Set(),o=[];
+    arr.forEach(function(s){ var k=norm(s); if(!seen.has(k)){ seen.add(k); o.push(s); } });
+    return o;
+  }
+  function calc(){
+    var A=uniq(parse($('fa').value)),B=uniq(parse($('fb').value));
+    var sa=new Set(A.map(norm)),sb=new Set(B.map(norm));
+    var res={
+      bma:B.filter(function(s){return !sa.has(norm(s))}),
+      both:A.filter(function(s){return sb.has(norm(s))})
+    };
+    $('fca').textContent='('+A.length+'개, 중복 제외)';
+    $('fcb').textContent='('+B.length+'개, 중복 제외)';
+    var bs=document.querySelectorAll('#ftabs button');
+    for(var i=0;i<bs.length;i++){ bs[i].querySelector('small').textContent=res[bs[i].getAttribute('data-k')].length; }
+    var r=res[key];
+    $('frt').textContent='결과 C: '+names[key]+' · '+r.length+'개';
+    $('fout').textContent=r.length?r.join('\n'):'(결과 없음)';
+    return r;
+  }
+  ['fa','fb','fsep','fic','ftr'].forEach(function(id){ $(id).addEventListener('input',calc); });
+  var fb=document.querySelectorAll('#ftabs button');
+  for(var j=0;j<fb.length;j++){
+    fb[j].addEventListener('click',function(){
+      key=this.getAttribute('data-k');
+      for(var k=0;k<fb.length;k++){ fb[k].className=fb[k]===this?'on':''; }
+      calc();
+    });
+  }
+  $('fcp').addEventListener('click',function(){
+    var t=calc().join('\n'), b=$('fcp');
+    function done(){ b.textContent='복사됨'; setTimeout(function(){ b.textContent='복사'; },1200); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done,function(){ legacy(t); done(); });
+    }else{ legacy(t); done(); }
+  });
+  function legacy(t){
+    var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); }catch(e){}
+    ta.remove();
+  }
+  calc();
 })();
 </script>
 </body>
