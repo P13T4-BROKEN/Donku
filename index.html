@@ -120,16 +120,6 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
 :root[data-theme="clean"] #prt svg{width:20px;height:20px}
 :root[data-theme="clean"] #prt:active:not(:disabled){box-shadow:none}
 @media (prefers-reduced-motion:reduce){#prt:hover svg{animation:none}}
-#print-area{display:none}
-#print-area img{max-width:100%;height:auto}
-@media print{
-  html,body{background:#fff!important}
-  body{background-image:none!important}
-  body>main{display:none!important}
-  #print-area{display:block!important;width:100%;text-align:center}
-  #print-area img{display:inline-block;margin:0 auto}
-  @page{margin:10mm}
-}
 </style>
 </head>
 <body>
@@ -214,7 +204,6 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
   </div>
   <p class="note" id="note-barcode">영문, 숫자, 기호(ASCII)만 쓸 수 있어요. 한글은 Code128로 표현할 수 없어요.<br>바코드를 우클릭하거나 길게 누르면 새 탭에서 열거나 이미지로 저장할 수 있어요.</p>
 </main>
-<div id="print-area" aria-hidden="true"></div>
 
 <script>
 (function(){
@@ -272,10 +261,21 @@ textarea:focus-visible,select:focus-visible,.opts input:focus-visible{outline:2p
   });
   prt.addEventListener('click',function(){
     if(!ok) return;
-    var pa=$('print-area'), im=new Image();
-    im.onload=function(){ pa.innerHTML=''; pa.appendChild(im); window.print(); };
-    im.onerror=function(){ say('인쇄 준비에 실패했어요.'); };
-    im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup());
+    var url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(markup());
+    var f=document.createElement('iframe');
+    f.style.cssText='position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(f);
+    var d=f.contentDocument; d.open();
+    d.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>barcode</title><style>@page{margin:10mm}html,body{margin:0;padding:0;background:#fff}body{text-align:center}img{display:inline-block;max-width:100%;height:auto}</style></head><body><img id="b" alt="" src="'+url+'"></body></html>');
+    d.close();
+    var im=d.getElementById('b');
+    function go(){
+      var w=f.contentWindow;
+      w.onafterprint=function(){ f.remove(); };
+      w.focus(); w.print();
+    }
+    im.onerror=function(){ f.remove(); say('인쇄 준비에 실패했어요.'); };
+    if(im.complete&&im.naturalWidth) go(); else im.onload=go;
   });
   png.addEventListener('click',function(){
     if(!ok) return;
